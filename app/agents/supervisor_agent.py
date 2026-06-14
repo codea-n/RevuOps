@@ -89,7 +89,7 @@ def supervisor_node(state: ReviewState) -> dict:
         logger.info("Supervisor: review generated successfully")
     except Exception as e:
         logger.error(f"Supervisor: Groq call failed — {e}")
-        review = f"⚠️ AutoReviewer error: could not generate review ({e})"
+        review = f"AutoReviewer error: could not generate review ({e})"
 
     return {
     "final_review": review,
