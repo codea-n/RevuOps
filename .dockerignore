@@ -1,0 +1,8 @@
+venv/
+__pycache__/
+*.pyc
+.env
+.git/
+*.md
+training_data.jsonl
+requirements_frozen.txt
