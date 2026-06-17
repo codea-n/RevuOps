@@ -113,7 +113,7 @@ distro==1.9.0
 sse-starlette==3.0.3
 requests-toolbelt==1.0.0
 uuid_utils==0.16.0
-xxhash==0.0.0
+xxhash==3.7.0
 zstandard==0.23.0
 setuptools==82.0.1
 tzdata==2026.2
