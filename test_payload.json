@@ -1,0 +1,1 @@
+﻿{"action":"opened","pull_request":{"number":1,"title":"Test PR","user":{"login":"testuser"},"base":{"ref":"main"},"head":{"ref":"feature-branch"},"diff_url":"https://github.com/test/test/pull/1.diff"},"repository":{"full_name":"testuser/testrepo"}}
