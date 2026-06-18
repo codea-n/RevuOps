@@ -51,7 +51,11 @@ async def _run_review(pr_info: dict):
         logger.info(f"Review {review_id} posted to PR #{pr_info['pr_number']}")
 
     except Exception as e:
+        import traceback
         logger.error(f"Review failed for PR #{pr_info['pr_number']}: {e}")
+        logger.error(traceback.format_exc())
+        print(f"[AutoReviewer ERROR] {traceback.format_exc()}")
+
 
 
 @router.post("/webhook/github")
