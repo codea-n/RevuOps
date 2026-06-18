@@ -14,8 +14,7 @@ def orchestrator_node(state: ReviewState) -> dict:
     """
     pr = state.get("pr_number", "unknown")
     repo = state.get("repo_full_name", "unknown")
-    diff_len = len(state.get("diff", ""))
-
+    diff_len = len(state.get("diff", "").strip())
     logger.info(f"Orchestrator: starting review for PR #{pr} in {repo}")
     logger.info(f"Diff size: {diff_len} chars")
 
