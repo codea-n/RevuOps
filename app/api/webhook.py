@@ -2,7 +2,9 @@ import hmac
 import hashlib
 import logging
 import os
+import json
 
+import httpx
 from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request
 
 from app.agents.graph import review_graph
@@ -13,13 +15,30 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+async def _fetch_diff(diff_url: str) -> str:
+    token = os.getenv("GITHUB_TOKEN")
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3.diff",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    async with httpx.AsyncClient() as client:
+        response = await client.get(diff_url, headers=headers, follow_redirects=True)
+        response.raise_for_status()
+        return response.text
+
+
 async def _run_review(pr_info: dict):
     try:
+        logger.info(f"Fetching diff for PR #{pr_info['pr_number']}")
+        diff = await _fetch_diff(pr_info["diff_url"])
+        logger.info(f"Diff fetched: {len(diff)} chars")
+
         initial_state = {
             "pr_number":              pr_info["pr_number"],
             "repo_full_name":         pr_info["repo"],
-            "diff":                   pr_info.get("diff", ""),
-            "rag_context":            pr_info.get("rag_context", ""),
+            "diff":                   diff,
+            "rag_context":            "",
             "security_findings":      None,
             "performance_findings":   None,
             "architecture_findings":  None,
@@ -29,6 +48,10 @@ async def _run_review(pr_info: dict):
         }
 
         result = await review_graph.ainvoke(initial_state)
+
+        if result.get("error"):
+            logger.error(f"Graph error: {result['error']}")
+            return
 
         review_id = save_review(
             pr_number             = pr_info["pr_number"],
@@ -54,8 +77,6 @@ async def _run_review(pr_info: dict):
         import traceback
         logger.error(f"Review failed for PR #{pr_info['pr_number']}: {e}")
         logger.error(traceback.format_exc())
-        print(f"[AutoReviewer ERROR] {traceback.format_exc()}")
-
 
 
 @router.post("/webhook/github")
@@ -68,9 +89,7 @@ async def github_webhook(
     payload = await request.body()
     _verify_signature(payload, x_hub_signature_256)
 
-    import json
     body = json.loads(payload)
-
     action = body.get("action")
 
     if x_github_event == "pull_request" and action in ("opened", "synchronize"):
