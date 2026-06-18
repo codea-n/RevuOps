@@ -80,7 +80,8 @@ def supervisor_node(state: ReviewState) -> dict:
     try:
         response = client.chat.completions.create(
             model=MODEL_VERSION,   # ← was hardcoded string before
-            messages=[...],
+            messages=[{"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": user_prompt},],
             temperature=0.2,
             max_tokens=1024,
         )
