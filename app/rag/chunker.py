@@ -98,19 +98,35 @@ def _split_by_file(diff_text: str) -> List[tuple[str, str]]:
 
 
 def _split_by_hunk(section: str) -> List[str]:
-    """Split a file section into individual diff hunks by '@@' markers."""
-    hunks = []
+    """Split a file section into individual diff hunks by '@@' markers.
+
+    The diff header (diff --git / index / --- / +++ lines) is merged
+    into the first hunk rather than becoming its own chunk — it has
+    no value on its own and would otherwise double the chunk count
+    for every file.
+    """
+    lines = section.splitlines(keepends=True)
+    header_lines: List[str] = []
+    hunks: List[str] = []
     current: List[str] = []
 
-    for line in section.splitlines(keepends=True):
-        if line.startswith("@@") and current:
-            hunks.append("".join(current))
-            current = [line]
+    for line in lines:
+        if line.startswith("@@"):
+            if current:
+                hunks.append("".join(current))
+            current = list(header_lines) if not hunks else []
+            current.append(line)
+        elif not hunks and not current:
+            # Still in the header, before the first @@
+            header_lines.append(line)
         else:
             current.append(line)
 
     if current:
         hunks.append("".join(current))
+    elif header_lines and not hunks:
+        # No @@ markers at all — return the header as-is
+        hunks.append("".join(header_lines))
 
     return hunks
 
