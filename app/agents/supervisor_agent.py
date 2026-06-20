@@ -19,8 +19,9 @@ Rules:
 - Format: use markdown with ## headers for each section
 - Skip sections with no findings — don't write "No issues found" for every tool
 - End with a one-line summary verdict: APPROVE / REQUEST_CHANGES / COMMENT
-- Rules for verdict: any HIGH severity issue = REQUEST_CHANGES, any MEDIUM = COMMENT, all low/warning = APPROVE"""
-
+- Rules for verdict: any HIGH severity issue = REQUEST_CHANGES, any MEDIUM = COMMENT
+- If ANY security finding exists (regardless of severity), the verdict must be at minimum COMMENT — never APPROVE
+- APPROVE is only valid when there are zero security findings and zero high-severity performance/architecture issues"""
 
 def _build_prompt(state: ReviewState) -> str:
     sec  = state.get("security_findings")    or {}
