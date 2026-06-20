@@ -8,3 +8,4 @@ dist/
 tmp*.py
 training_data.jsonl
 requirements_frozen.txt
+.coverage
