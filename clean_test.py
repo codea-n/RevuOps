@@ -1,0 +1,1 @@
+PASSWORD = 'hardcoded_secret_12345'
