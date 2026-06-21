@@ -1,4 +1,4 @@
-# Contributing to AutoReviewer
+# Contributing to RevuOps
 
 Thanks for considering a contribution. This is primarily a portfolio/learning project, but PRs and issues are welcome.
 
@@ -8,11 +8,11 @@ Thanks for considering a contribution. This is primarily a portfolio/learning pr
 
 ```powershell
 
-#x20;  python -m venv venv
+  python -m venv venv
 
-#x20;  .\\venv\\Scripts\\Activate.ps1
+  .\\venv\\Scripts\\Activate.ps1
 
-#x20;  pip install -r requirements.txt
+  pip install -r requirements.txt
 
 ```
 
@@ -22,7 +22,7 @@ Thanks for considering a contribution. This is primarily a portfolio/learning pr
 
 ```powershell
 
-#x20;  python -m uvicorn app.main:app --reload
+  python -m uvicorn app.main:app --reload
 
 ```
 
