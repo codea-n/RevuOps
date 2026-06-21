@@ -10,7 +10,7 @@ Thanks for considering a contribution. This is primarily a portfolio/learning pr
 
   python -m venv venv
 
-  .\\venv\\Scripts\\Activate.ps1
+  .\venv\Scripts\Activate.ps1
 
   pip install -r requirements.txt
 
@@ -34,7 +34,7 @@ python -m pytest --cov=app tests/
 
 ```
 
-All tests must pass before a PR will be merged — CI enforces this automatically via GitHub Actions.
+All tests must pass before a PR will be merged. CI enforces this automatically via GitHub Actions.
 
 ## Project Structure
 
