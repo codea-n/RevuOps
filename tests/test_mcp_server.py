@@ -37,7 +37,7 @@ class TestListTools:
             assert "code" in required, f"Tool '{tool.name}' schema must require 'code'"
 
 
-# ── call_tool: routing ────────────────────────────────────────────────────────
+# ── call_tool: routing ───────────────────────────────────
 
 class TestCallToolRouting:
     @pytest.mark.asyncio
@@ -72,7 +72,7 @@ class TestCallToolRouting:
         assert "nonexistent_tool" in payload["error"]
 
 
-# ── call_tool: return type ────────────────────────────────────────────────────
+# ── call_tool: return type ──────────────────────────────
 
 class TestCallToolReturnType:
     @pytest.mark.asyncio
