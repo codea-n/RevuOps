@@ -3,16 +3,38 @@ import hashlib
 import logging
 import os
 import json
-
 import httpx
 from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request
-
 from app.agents.graph import review_graph
 from app.api.github_client import post_pr_comment
 from app.db.repository import save_review
+from app.db.supabase_client import get_client
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+def _lookup_user_id(installation_id: int) -> str | None:
+    """
+    Given a GitHub App installation_id, find which user installed it.
+    Returns their Supabase user_id, or None if not found.
+    Why: every webhook GitHub sends includes installation_id — this is
+    how we link a PR review back to the user who owns that repo.
+    """
+    if not installation_id:
+        return None
+    try:
+        client = get_client()
+        res = client.table("installations")\
+            .select("user_id")\
+            .eq("installation_id", installation_id)\
+            .limit(1)\
+            .execute()
+        if res.data:
+            return res.data[0]["user_id"]
+    except Exception as e:
+        logger.warning(f"Could not look up user for installation {installation_id}: {e}")
+    return None
 
 
 async def _fetch_diff(diff_url: str) -> str:
@@ -61,16 +83,15 @@ async def _run_review(pr_info: dict):
             performance_findings  = result.get("performance_findings"),
             architecture_findings = result.get("architecture_findings"),
             model_version         = result.get("model_version", "unknown"),
+            user_id               = pr_info.get("user_id"),   # ← new
         )
 
         comment_body = result.get("final_review", "") + f"\n\n<!-- autoreview_id:{review_id} -->"
-
         await post_pr_comment(
             repo_full_name = pr_info["repo"],
             pr_number      = pr_info["pr_number"],
             body           = comment_body,
         )
-
         logger.info(f"Review {review_id} posted to PR #{pr_info['pr_number']}")
 
     except Exception as e:
@@ -79,7 +100,7 @@ async def _run_review(pr_info: dict):
         logger.error(traceback.format_exc())
 
 
-@router.post("/webhook/github")
+@router.post("/webhook")                          # ← fixed: was /webhook/github
 async def github_webhook(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -88,12 +109,19 @@ async def github_webhook(
 ):
     payload = await request.body()
     _verify_signature(payload, x_hub_signature_256)
-
     body = json.loads(payload)
+
     action = body.get("action")
 
     if x_github_event == "pull_request" and action in ("opened", "synchronize"):
         pr = body["pull_request"]
+
+        # Extract installation_id GitHub sends with every webhook
+        installation_id = body.get("installation", {}).get("id")
+        # Look up which user owns this installation
+        user_id = _lookup_user_id(installation_id)
+        logger.info(f"Webhook: installation_id={installation_id}, user_id={user_id}")
+
         pr_info = {
             "pr_number":   pr["number"],
             "title":       pr["title"],
@@ -102,6 +130,7 @@ async def github_webhook(
             "base_branch": pr["base"]["ref"],
             "head_branch": pr["head"]["ref"],
             "diff_url":    pr["diff_url"],
+            "user_id":     user_id,               # ← new
         }
 
         background_tasks.add_task(_run_review, pr_info)
